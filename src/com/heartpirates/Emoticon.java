@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
@@ -38,6 +39,7 @@ public class Emoticon {
 	public byte[] getPNG() {
 		try {
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
+			os.reset();
 			ImageIO.write(bimg, "PNG", os);
 			os.flush();
 			return os.toByteArray();
@@ -52,42 +54,38 @@ public class Emoticon {
 				.getData();
 
 		// find right crop
-		int ww = w;
-		boolean w_done = false;
-		for (int x = w - 1; x > 0; x--) {
+		int xw = w;
+
+		while (xw > 0) {
+			int aval = 0;
 			for (int y = 0; y < h; y++) {
-				int sp = x + y * w;
-				int pixel = pixels[sp];
-				if ((pixel & 0xffffff) > 0) {
-					w_done = true;
-					break;
-				}
+				int sp = xw + y * w;
+				if (sp > 0 && sp < pixels.length)
+					aval |= (pixels[sp] >> 24);
 			}
-			if (w_done) {
-				ww = x + 4;
+			if (aval != 0) {
 				break;
 			}
+			xw--;
 		}
 
 		// find bottom crop
-		int hh = h;
-		boolean h_done = false;
-		for (int y = h - 1; y > 0; y--) {
+		int yw = h;
+
+		while (yw > 0) {
+			int aval = 0;
 			for (int x = 0; x < w; x++) {
-				int sp = x + y * w;
-				int pixel = pixels[sp];
-				if ((pixel & 0xffffff) > 0) {
-					h_done = true;
-					break;
-				}
+				int sp = x + yw * w;
+				if (sp > 0 && sp < pixels.length)
+					aval += (pixels[sp] >> 24);
 			}
-			if (h_done) {
-				hh = y + 1;
+			if (aval != 0) {
 				break;
 			}
+			yw--;
 		}
 
-		return bimg.getSubimage(0, 0, ww, hh);
+		return bimg.getSubimage(0, 0, xw + 1, yw + 1);
 	}
 
 	public static void main(String[] args) {
@@ -96,10 +94,11 @@ public class Emoticon {
 			if (s.equalsIgnoreCase("test")) {
 				System.out.println("Test");
 			} else {
-				Emoticon e = new Emoticon(args[0]);
+				Emoticon e = new Emoticon(args[args.length - 1]);
 				try {
 					// write the bytes to the output stream
 					System.out.write(e.getPNG());
+					System.out.flush();
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
@@ -107,19 +106,26 @@ public class Emoticon {
 		} else {
 			try {
 				createAndShowGUI();
+				System.out.println("Showing gui");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
-	public static void createAndShowGUI() {
+	public static void createAndShowGUI() throws IOException {
 		JFrame frame = new JFrame("Emoticon");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		Emoticon e = new Emoticon("シ (╯°□°）╯︵ ┻━┻ シ");
+		Emoticon e = new Emoticon("ã‚· (â•¯Â°â–¡Â°ï¼‰â•¯ï¸µ â”»â”�â”» ã‚·");
 
-		final BufferedImage image = e.bimg;
+		ByteArrayInputStream input = new ByteArrayInputStream(e.getPNG());
+		BufferedImage bimg = ImageIO.read(input);
+
+		System.out.println("E.bimg: " + e.bimg.getType() + ", bufimg: "
+				+ bimg.getType());
+
+		final BufferedImage image = bimg;
 		Canvas canvas;
 		frame.add(canvas = new Canvas() {
 			@Override
