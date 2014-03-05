@@ -117,7 +117,7 @@ public class Emoticon {
 		JFrame frame = new JFrame("Emoticon");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		Emoticon e = new Emoticon("ã‚· (â•¯Â°â–¡Â°ï¼‰â•¯ï¸µ â”»â”�â”» ã‚·");
+		Emoticon e = new Emoticon("シ (╯°□°）╯︵ ┻━┻ シ");
 
 		ByteArrayInputStream input = new ByteArrayInputStream(e.getPNG());
 		BufferedImage bimg = ImageIO.read(input);
