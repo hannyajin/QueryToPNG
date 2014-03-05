@@ -122,9 +122,6 @@ public class Emoticon {
 		ByteArrayInputStream input = new ByteArrayInputStream(e.getPNG());
 		BufferedImage bimg = ImageIO.read(input);
 
-		System.out.println("E.bimg: " + e.bimg.getType() + ", bufimg: "
-				+ bimg.getType());
-
 		final BufferedImage image = bimg;
 		Canvas canvas;
 		frame.add(canvas = new Canvas() {
