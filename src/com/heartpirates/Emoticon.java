@@ -4,11 +4,13 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URLDecoder;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -22,15 +24,45 @@ public class Emoticon {
 	static Color fgColor = new Color(0x202020);
 	static Color bgColor = new Color(0xCFBFAD);
 
-	public Emoticon(String str) {
-		w = str.length() * 10;
+	public static final Font FONT = getFont("res/font/arialuni.ttf");
+
+	public static String[] emotes = { "(　ﾟДﾟ)＜!!", "(¬д¬。)", "(＃｀д´)ﾉ",
+			"(/ﾟДﾟ)/", "（；¬＿¬)", "(」゜ロ゜)」", "(；￣Д￣）", "＼(｀0´)／", "-",
+			"(╯°□°）╯︵ ┻━┻", "(╯°Д°）╯︵/(.□ . \\)", "ヽ(#ﾟДﾟ)ﾉ┌┛Σ(ノ´Д`)ノ",
+			"d(｀⌒´メ)z", "(∩｀-´)⊃━☆ﾟ.*･｡ﾟ", "ヽ₍⁽ˆ⁰ˆ⁾₎」♪♬" };
+
+	public static String getEmote(int n) {
+		if (n < 0)
+			n = (int) (Math.random() * emotes.length);
+		return emotes[n % emotes.length];
+	}
+
+	public static Font getFont(String path) {
+		try {
+			Font f = Font.createFont(Font.TRUETYPE_FONT, Emoticon.class
+					.getClassLoader().getResourceAsStream(path));
+
+			return f.deriveFont(14f);
+		} catch (Exception e) {
+
+		}
+		return null;
+	}
+
+	public Emoticon(String emote) {
+		if (emote.length() < 1)
+			emote = ("シ (╯°□°）╯︵ ┻━┻ シ");
+
+		w = emote.length() * 12 + 1;
 		bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = bimg.getGraphics();
+		if (FONT != null)
+			g.setFont(FONT);
 		Font f = g.getFont();
 		int size = f.getSize();
 
 		g.setColor(fgColor);
-		g.drawString(str, 0, size);
+		g.drawString(emote, 0, size);
 		g.dispose();
 
 		bimg = crop(bimg);
@@ -85,7 +117,15 @@ public class Emoticon {
 			yw--;
 		}
 
-		return bimg.getSubimage(0, 0, xw + 1, yw + 1);
+		xw++;
+		yw++;
+
+		if (xw > w)
+			xw = w;
+		if (yw > h)
+			yw = h;
+
+		return bimg.getSubimage(0, 0, xw, yw);
 	}
 
 	public static void main(String[] args) {
@@ -93,9 +133,18 @@ public class Emoticon {
 			String s = args[0];
 			if (s.equalsIgnoreCase("test")) {
 				System.out.println("Test");
-			} else {
-				Emoticon e = new Emoticon(args[args.length - 1]);
+			} else if (s.equalsIgnoreCase("print")) {
 				try {
+					System.out.write("Text Print Test".getBytes());
+					System.out.flush();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					String emote = URLDecoder.decode(args[args.length - 1],
+							"UTF-8");
+					Emoticon e = new Emoticon(emote);
 					// write the bytes to the output stream
 					System.out.write(e.getPNG());
 					System.out.flush();
@@ -105,8 +154,16 @@ public class Emoticon {
 			}
 		} else {
 			try {
-				createAndShowGUI();
-				System.out.println("Showing gui");
+				if (GraphicsEnvironment.isHeadless()) {
+					Emoticon e = new Emoticon(getEmote(-1)); // random emote
+					// write the bytes to the output stream
+					System.out.write(e.getPNG());
+					System.out.flush();
+				} else {
+					// not in headless mode, show gui
+					createAndShowGUI();
+					System.out.println("Showing gui");
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -117,7 +174,7 @@ public class Emoticon {
 		JFrame frame = new JFrame("Emoticon");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		Emoticon e = new Emoticon("シ (╯°□°）╯︵ ┻━┻ シ");
+		Emoticon e = new Emoticon(getEmote(-1));
 
 		ByteArrayInputStream input = new ByteArrayInputStream(e.getPNG());
 		BufferedImage bimg = ImageIO.read(input);
